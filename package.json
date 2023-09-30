@@ -1,0 +1,16 @@
+{
+  "name": "remxml",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "octanuary",
+  "license": "MIT",
+  "dependencies": {
+    "xml-writer": "^1.7.0"
+  }
+}
