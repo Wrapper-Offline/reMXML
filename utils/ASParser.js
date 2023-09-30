@@ -1,5 +1,7 @@
+import Tokens from "./tokens.js";
+
 export default class ASParser {
-	className = null;
+	componentName = null;
 	extends = null;
 	namespaces = {
 		// use the default flex namespaces
@@ -14,63 +16,90 @@ export default class ASParser {
 	components = {};
 
 	/**
-	 * @param {string} input 
+	 * @param {string} input actionscript file
 	 */
 	constructor(input) {
+		let tokens = [];
 		const lines = input.split("\n");
-		lineLoop: for (let line of lines) {
-			line = line.trim();
-			const keywords = line.split(" ");
-			let access, isInComplex = false;
-			keywordLoop: for (let i = 0; i < keywords.length; i++) {
-				const keyword = this.#keywordMapping(keywords[i]);
-				if (!keyword) {
-					continue;
-				}
-
-				let arg;
-				if (keyword.hasArg) {
-					arg = keywords[i + 1];
-				}
-				switch (keyword.does) {
-					case "import": {
-						this.imported.push(arg.slice(0, -1));
-						break keywordLoop;
+		for (let lineIndex in lines) {
+			const line = lines[lineIndex].trim();
+			if (line.length == 0) {
+				continue;
+			}
+			let prevIndex = 0;
+			// split on certain symbols
+			for (let charIndex = 0; charIndex < line.length; charIndex++) {
+				const char = line[charIndex];
+				if (Tokens.symbolList.find((v) => v == char) || charIndex == line.length - 1) {
+					// don't cut off lines that don't end in ;
+					if (charIndex == line.length - 1 && !line.endsWith(";")) {
+						charIndex++;
 					}
-					case "changeAccess": {
-						access = keywords[i];
-						continue;
+					// check to avoid inserting empty tokens
+					if (prevIndex !== charIndex) {
+						tokens.push(line.substring(prevIndex, charIndex));
 					}
-					case "class": {
-						this.className = arg;
-						continue;
+					// add operators to the token list
+					if (char !== " " && charIndex !== line.length) {
+						tokens.push(char);
 					}
-					case "classExtends": {
-						let namespace = this.imported.find((v) => v.endsWith(arg));
-						if (namespace.startsWith("spark")) {
-							namespace = this.namespaces.s;
-						}
-						const component = {
-							name: arg,
-							from: namespace,
-						};
-						this.components.root = component;
-						break keywordLoop;
-					}
-					case "beginFuncDefinition": {
-						let namespace = this.imported.find((v) => v.endsWith(arg));
-						if (namespace.startsWith("spark")) {
-							namespace = this.namespaces.s;
-						}
-						const component = {
-							name: arg,
-							from: namespace,
-						};
-						this.components.root = component;
-					}
+					prevIndex = charIndex + 1;
 				}
 			}
 		}
+		console.log(tokens);
+
+		let access = "";
+		for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+			const token = tokens[tokenIndex];
+			switch (token) {
+				case "import": {
+					tokenIndex++;
+					this.imported.push(tokens[tokenIndex]);
+					continue;
+				}
+				case "public":
+				case "protected":
+				case "private": {
+					access = token;
+					continue;
+				}
+				case "class": {
+					tokenIndex++;
+					this.componentName = tokens[tokenIndex];
+					continue;
+				}
+				case "extends": {
+					tokenIndex++;
+					const arg = tokens[tokenIndex];
+					let namespace = this.imported.find((v) => v.endsWith(arg));
+					if (namespace.startsWith("spark")) {
+						namespace = this.namespaces.s;
+					} else if (namespace.startsWith("mx")) {
+						namespace = this.namespaces.mx;
+					}
+					const component = {
+						name: arg,
+						from: namespace,
+					};
+					this.components["root"] = component;
+					continue;
+				}
+				/*case "function": {
+					let namespace = this.imported.find((v) => v.endsWith(arg));
+					if (namespace.startsWith("spark")) {
+						namespace = this.namespaces.s;
+					}
+					const component = {
+						name: arg,
+						from: namespace,
+					};
+					this.components.root = component;
+				}*/
+			}
+		}
+
+
 		/*let nsPieces = arg.split(".");
 		nsPieces.pop();
 		let alias = "";

@@ -24,6 +24,6 @@ export default class ReMXML {
 		xw.text('Some content');
 		xw.endDocument();*/
 		//this.#generated = new XML(parser.extends);
-		console.log(parser.className, parser.components[0]);
+		console.log(parser.componentName, parser.components["root"]);
 	}
 };

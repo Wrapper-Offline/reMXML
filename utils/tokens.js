@@ -1,4 +1,4 @@
-class ParserConstants {
+export default class Tokens {
 	static excludeFunctions = [""];
 	static excludeVars = [
 		"_watcherSetupUtil",
@@ -8,6 +8,8 @@ class ParserConstants {
 		"_bindingsByDestination",
 		"_bindingsBeginWithWord",
 	];
+
+	static symbolList = [" ", ":", ";", "[", "]", "{", "}", "="];
 
 	/**
 	 * @param {string} keyword 
@@ -35,4 +37,4 @@ class ParserConstants {
 		}
 		return false;
 	}
-}
+};
