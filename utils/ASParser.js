@@ -1,7 +1,7 @@
 import Tokens from "./tokens.js";
 
 export default class ASParser {
-	componentName = null;
+	name = null;
 	extends = null;
 	namespaces = {
 		// use the default flex namespaces
@@ -11,7 +11,7 @@ export default class ASParser {
 	};
 	/** @type {string[]} */
 	imported = [];
-	vars = [];
+	vars = {};
 	functions = [];
 	components = {};
 
@@ -49,7 +49,10 @@ export default class ASParser {
 		}
 		console.log(tokens);
 
-		let access = "";
+		let currentState = {
+			state: "package"
+		};
+		let access = "", functionScoped = false, bindable = false, inComponentCreation = false;
 		for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
 			const token = tokens[tokenIndex];
 			switch (token) {
@@ -64,9 +67,13 @@ export default class ASParser {
 					access = token;
 					continue;
 				}
+				case "Bindable": {
+					bindable = true;
+					continue;
+				}
 				case "class": {
 					tokenIndex++;
-					this.componentName = tokens[tokenIndex];
+					this.name = tokens[tokenIndex];
 					continue;
 				}
 				case "extends": {
@@ -85,8 +92,48 @@ export default class ASParser {
 					this.components["root"] = component;
 					continue;
 				}
-				/*case "function": {
-					let namespace = this.imported.find((v) => v.endsWith(arg));
+				case "var": {
+					if (functionScoped == false) {
+						const name = tokens[tokenIndex + 1];
+						if (Tokens.excludeVars.indexOf(name) > 0) {
+							continue;
+						}
+						const type = tokens[tokenIndex + 3];
+						let value;
+						if (tokens[tokenIndex + 4] == "=") {
+							value = tokens[tokenIndex + 5];
+						} else {
+							value = null;
+						}
+						this.vars[name] = {
+							type,
+							value,
+							access
+						};
+					} else {
+						if (inComponentCreation) {
+
+						}
+					}
+					continue;
+				}
+				case "function": {
+					currentState = "funcDef";
+					functionScoped = true;
+					let name = tokens[tokenIndex + 1];
+					if (name == "get" || name == "set") {
+						name = tokens[tokenIndex + 2];
+					}
+					if (new RegExp(`_${this.name}_(\w)+(\d)+_(i|c)`).test(name)) {
+						
+					}
+					const setsBindableSetter = /^_(\d){9}/.test(name);
+					if (bindable) {
+						const varKey = Object.keys(this.vars).find((v) => v.endsWith(name));
+						const variable = this.vars[varKey];
+						
+					}
+					/*let namespace = this.imported.find((v) => v.endsWith(arg));
 					if (namespace.startsWith("spark")) {
 						namespace = this.namespaces.s;
 					}
@@ -94,8 +141,13 @@ export default class ASParser {
 						name: arg,
 						from: namespace,
 					};
-					this.components.root = component;
-				}*/
+					this.components.root = component;*/
+				}
+				case "{": {
+					if (currentState == "funcDef") {
+						currentState = "inFunc";
+					}
+				}
 			}
 		}
 
