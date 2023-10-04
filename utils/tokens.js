@@ -8,5 +8,5 @@ export default class Tokens {
 		"_bindingsByDestination",
 		"_bindingsBeginWithWord",
 	];
-	static symbolList = [" ", ":", ";", "[", "]", "{", "}", "=", "(", ")", ","];
+	static symbolList = [" ", ".", ":", ";", "[", "]", "{", "}", "=", "(", ")", ","];
 };

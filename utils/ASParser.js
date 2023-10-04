@@ -12,7 +12,7 @@ export default class ASParser {
 	/** @type {string[]} */
 	imported = [];
 	vars = {};
-	functions = [];
+	functions = {};
 	components = {};
 
 	/**
@@ -49,16 +49,19 @@ export default class ASParser {
 		}
 		console.log(tokens);
 
-		let currentState = {
-			state: "package"
-		};
-		let access = "", functionScoped = false, bindable = false, inComponentCreation = false;
+		let tempComponents = {};
+		let actions = [];
+		let access = "", bindable = false, inComponentCreation = false;
 		for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
 			const token = tokens[tokenIndex];
 			switch (token) {
+				case "package": {
+					actions.push({a:"packageDec"});
+					continue;
+				}
 				case "import": {
-					tokenIndex++;
-					this.imported.push(tokens[tokenIndex]);
+					const namespace = tokens[tokenIndex + 1];
+					actions.push({a:"import", import:[namespace]});
 					continue;
 				}
 				case "public":
@@ -74,26 +77,42 @@ export default class ASParser {
 				case "class": {
 					tokenIndex++;
 					this.name = tokens[tokenIndex];
+					actions.push({a:"classDec", name:this.name});
 					continue;
 				}
 				case "extends": {
-					tokenIndex++;
-					const arg = tokens[tokenIndex];
-					let namespace = this.imported.find((v) => v.endsWith(arg));
-					if (namespace.startsWith("spark")) {
-						namespace = this.namespaces.s;
-					} else if (namespace.startsWith("mx")) {
-						namespace = this.namespaces.mx;
+					if (actions[actions.length - 1].a == "classDec") {
+						tokenIndex++;
+						const arg = tokens[tokenIndex];
+						let namespace = this.imported.find((v) => v.endsWith(arg));
+						if (namespace.startsWith("spark")) {
+							namespace = this.namespaces.s;
+						} else if (namespace.startsWith("mx")) {
+							namespace = this.namespaces.mx;
+						}
+						const component = {
+							name: arg,
+							from: namespace,
+						};
+						this.components["root"] = component;
 					}
-					const component = {
-						name: arg,
-						from: namespace,
-					};
-					this.components["root"] = component;
+					continue;
+				}
+				case "watchers":
+				case "bindings": { // we'll get there when we get there
+					if (actions[actions.length - 1].a == "function") {
+						actions.push({a:"ignoreLine"});
+					}
+					continue;
+				}
+				case "mx_internal":
+				case "super": { // boooringg
+					actions.push({a:"ignoreLine"});
 					continue;
 				}
 				case "var": {
-					if (functionScoped == false) {
+					actions.push({a:"varDec"});
+					if (actions[actions.length - 2].a !== "function") {
 						const name = tokens[tokenIndex + 1];
 						if (Tokens.excludeVars.indexOf(name) > 0) {
 							continue;
@@ -118,35 +137,113 @@ export default class ASParser {
 					continue;
 				}
 				case "function": {
-					currentState = "funcDef";
-					functionScoped = true;
+					const action = {a:"functionDec"};
+					const func = {};
 					let name = tokens[tokenIndex + 1];
 					if (name == "get" || name == "set") {
-						name = tokens[tokenIndex + 2];
+						const prefix = name + ":";
+						name = prefix + tokens[tokenIndex + 2];
 					}
+					action.name = name;
+					// are we defining a component?
 					if (new RegExp(`_${this.name}_(\w)+(\d)+_(i|c)`).test(name)) {
-						
+						return;
 					}
-					const setsBindableSetter = /^_(\d){9}/.test(name);
+					action.a = "functionDef";
+					// todo: add support for bindable getters and setters
+					//const setsBindableSetter = /^_(\d){9}/.test(name);
 					if (bindable) {
 						const varKey = Object.keys(this.vars).find((v) => v.endsWith(name));
 						const variable = this.vars[varKey];
 						
 					}
-					/*let namespace = this.imported.find((v) => v.endsWith(arg));
-					if (namespace.startsWith("spark")) {
-						namespace = this.namespaces.s;
+					actions.push(action);
+					this.functions[name] = func;
+					
+					continue;
+				}
+				case "=": {
+					const setVar = actions[actions.length - 1];
+					if (setVar.a == "varDef") {
+						setVar.assign = token;
+						setVar.startFromIndex = tokenIndex + 1;
 					}
-					const component = {
-						name: arg,
-						from: namespace,
-					};
-					this.components.root = component;*/
+					continue;
+				}
+				case ":": {
+					const action = actions[actions.length - 1];
+					if (action.a == "functionDec") {
+						const type = tokens[tokenIndex + 1];
+						this.functions[action.name].type = type;
+					}
+					continue;
+				}
+				case ".": {
+					const arg = tokens[tokenIndex + 1];
+					if (arg == "mx_internal") { // useless to us; ignore
+						actions.push({a:"ignoreLine"});
+						break;
+					}
+					const latestAction = actions[actions.length - 1];
+					switch (latestAction.a) {
+						case "import": {
+							latestAction.import.push(arg);
+							break;
+						}
+						case "function": {
+							const of = actions[actions.length - 1];
+							if (of == "this") {
+								this.vars[arg];
+							}
+							actions.push({a:"varDef", name:arg, of:of});
+						}
+					}
+					continue;
 				}
 				case "{": {
-					if (currentState == "funcDef") {
-						currentState = "inFunc";
+					const last = actions[actions.length - 1];
+					// TODO: if this keeps on going, refactor it
+					switch (last.a) {
+						case "packageDec":
+							last.a = "package";
+							break;
+						case "classDec":
+							last.a = "class";
+							break;
+						case "functionDec":
+							last.a = "function";
+							break;
 					}
+					continue;
+				}
+				case "}": {
+					switch (actions[actions.length - 1].a) {
+						case "varDef":
+						case "ignoreLine":
+							continue;
+					}
+					actions.pop();
+					continue;
+				}
+				case ";": {
+					const latestAction = actions[actions.length - 1];
+					console.log(actions);
+					console.log(tokens.slice(tokenIndex - 10, tokenIndex + 10));
+					switch (latestAction.a) {
+						case "import": {
+							const importPath = latestAction.import.join(".");
+							this.imported.push(importPath);
+							break;
+						}
+						case "varDef": {
+							const value = tokens.slice(latestAction.startFromIndex, tokenIndex).join();
+							if (latestAction.of == "this") {
+								this.args[setVar.name] = value;
+							}
+						}
+					}
+					actions.pop();
+					continue;
 				}
 			}
 		}
