@@ -1,5 +1,9 @@
 export default class Tokens {
-	static excludeFunctions = [""];
+	static excludeFunctions = [
+		"watcherSetupUtil",
+		"moduleFactory",
+		"initialize",
+	];
 	static excludeVars = [
 		"_watcherSetupUtil",
 		"__moduleFactoryInitialized",
@@ -9,4 +13,6 @@ export default class Tokens {
 		"_bindingsBeginWithWord",
 	];
 	static symbolList = [" ", ".", ":", ";", "[", "]", "{", "}", "=", "(", ")", ","];
+	static upLevelSymbols = ["{", "("];
+	static downLevelSymbols = ["}", ")"];
 };
