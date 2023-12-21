@@ -1,7 +1,6 @@
 {
   "name": "remxml",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -12,5 +11,15 @@
   "license": "MIT",
   "dependencies": {
     "xml-writer": "^1.7.0"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenAnifire/reMXML.git"
+  },
+  "bugs": {
+    "url": "https://github.com/OpenAnifire/reMXML/issues"
+  },
+  "homepage": "https://github.com/OpenAnifire/reMXML#readme",
+  "description": ""
 }

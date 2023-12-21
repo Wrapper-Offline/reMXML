@@ -31,7 +31,7 @@ export default class ASParser {
 			const lines = input.split("\n");
 			for (let lineIndex in lines) {
 				const line = lines[lineIndex].trim();
-				if (line.length == 0) {
+				if (line.length == 0 || line.startsWith("//")) {
 					continue;
 				}
 				let prevIndex = 0;
@@ -60,6 +60,7 @@ export default class ASParser {
 			}
 			// organize it all
 			let level = [];
+			let inString = false, inComment = false, joinNext = false;
 			//let aHardCodedBreakCauseWhyNot_ItsHere_YouNeverKnowWhenYouNeedIt = 0;
 			for (let tokenIndex = 0; ; tokenIndex++) {
 				tokenIndex = Number.parseInt(tokenIndex);
@@ -70,35 +71,74 @@ export default class ASParser {
 				}
 				let token = currLevel[tokenIndex];
 
-				if (Tokens.upLevelSymbols.includes(token)) {
-					// remove the opening tag
+				if (!inComment && !inString && !joinNext) {
+					if (Tokens.openingTags.includes(token)) {
+						// remove the opening tag
+						currLevel.splice(tokenIndex, 1);
+						// remove everything following this and put it in a new array
+						const split = currLevel.splice(tokenIndex, currLevel.length - tokenIndex);
+						currLevel.push(split);
+						// take note of where we should be and reset the token index
+						level.push(tokenIndex);
+						tokenIndex = -1;
+					} else if (Tokens.closingTags.includes(token)) {
+						const split = currLevel.splice(tokenIndex, currLevel.length - tokenIndex);
+						// remove the closing tag
+						split.splice(0, 1);
+						// locate the previous level so we can move everything back to it
+						let prevLevel = tokens;
+						let levelIndex = 0;
+						for (let levelNumber = 0; levelNumber < level.length - 1; levelNumber++) {
+							levelIndex = level[levelNumber];
+							prevLevel = prevLevel[levelIndex];
+						}
+						prevLevel.push(...split);
+						// now we can leave this and never come back we're done here no more nuh uh hell no no way
+						// bye bye! :D
+						tokenIndex = level[level.length - 1];
+						level.splice(level.length - 1, 1)
+						if (level.length == 0) { 
+							break;
+						}
+					}
+				} else if (inComment) {
 					currLevel.splice(tokenIndex, 1);
-					// remove everything following this and put it in a new array
-					const split = currLevel.splice(tokenIndex, currLevel.length - tokenIndex);
-					currLevel.push(split);
-					// take note of where we should be and reset the token index
-					level.push(tokenIndex);
-					tokenIndex = -1;
+					tokenIndex--;
+				} else if (inString) {
+					if (
+						currLevel[tokenIndex - 1] !== "\"" &&
+						token !== "\""
+					) {
+						token = " " + token;
+					}
+					currLevel[tokenIndex - 1] += token;
+					currLevel.splice(tokenIndex, 1);
+					tokenIndex--;
+				} else if (joinNext) {
+					currLevel[tokenIndex - 2] += "." + token;
+					currLevel.splice(tokenIndex - 1, 2);
+					tokenIndex -= 2;
+					joinNext = false;
 				}
-				if (Tokens.downLevelSymbols.includes(token)) {
-					const split = currLevel.splice(tokenIndex, currLevel.length - tokenIndex);
-					// remove the closing tag
-					split.splice(0, 1);
-					// locate the previous level so we can move everything back to it
-					let prevLevel = tokens;
-					let levelIndex = 0;
-					for (let levelNumber = 0; levelNumber < level.length - 1; levelNumber++) {
-						levelIndex = level[levelNumber];
-						prevLevel = prevLevel[levelIndex];
-					}
-					prevLevel.push(...split);
-					// now we can leave this and never come back we're done here no more nuh uh hell no no way
-					// bye bye! :D
-					tokenIndex = level[level.length - 1];
-					level.splice(level.length - 1, 1)
-					if (level.length == 0) { 
+				switch (token) {
+					case "'":
+					case "\"":
+						inString = !inString;
 						break;
-					}
+					case "/*":
+						if (inString) break;
+						inComment = true;
+						currLevel.splice(tokenIndex, 1);
+						tokenIndex--;
+						break;
+					case "*/":
+						if (inString) break;
+						inComment = false;
+						break;
+					case ".":
+						if (inString) break;
+						joinNext = true;
+						break;
 				}
 				/*
 				leaving this in case it ever FUCKS UP
@@ -109,12 +149,75 @@ export default class ASParser {
 				}
 				*/
 			}
+			let newArray = [];
+			let stored = {a:[]};
+			let inDef = false, gyattdef = false;
+			let defObject = {};
+			let wevetaken = 0;
+			// finally we'll turn everything into like a tree and we're done with this stage
+			for (let tokenIndex = 0; ; tokenIndex++) {
+				tokenIndex = Number.parseInt(tokenIndex);
+
+				let currLevel = tokens;
+				for (const levelIndex of level) {
+					currLevel = currLevel[levelIndex];
+				}
+				let token = currLevel[tokenIndex];
+
+				if (Array.isArray(token)) {
+					if (gyattdef) {
+						
+					} else {
+						level.push(tokenIndex);
+						tokenIndex = -1;
+						continue;
+					}
+				} else if (typeof token == "undefined") {
+					if (level.length > 0) {
+						tokenIndex = level.pop();
+						continue;
+					}
+					break;
+				}
+
+				if (token == ";") {
+					if (inDef) {
+						currLevel[tokenIndex] = defObject;
+						defObject = {};
+					}
+				}
+
+				if (Tokens.attributes.includes(token)) {
+					stored.a.push(token);
+					currLevel.splice(tokenIndex, 1);
+					tokenIndex--;
+				}
+				if (Tokens.definitions.includes(token)) {
+					inDef = true;
+					if (Tokens.gyattdefs.includes(token)) {
+						gyattdef = true;
+					}
+					defObject = {
+						name: currLevel[tokenIndex + 1],
+						def: token
+					};
+					if (stored.a.length > 0) {
+						defObject.attributes = stored.a;
+						stored.a = [];
+					}
+				}
+
+				console.log(token)
+			}
 			console.dir(tokens, {depth:null});
 			res();
 		});
 	}
 
 	#parseTokens() {
+		// yeah i think this entire function is getting scrapped lol
+		// this is just not working well
+		// like at all
 		let tokenIndex = 0;
 		try {
 			let tempComponents = {};

@@ -6,6 +6,7 @@ package anifire.components.ass
 	class AssComponent extends you
 	{
 		private static var get:String = "go";
+		private var sohappytoshowus:String = "iatethelotus";
 
 		function ok(nice:String) : flex
 		{
@@ -15,9 +16,23 @@ package anifire.components.ass
 			}
 			trace("Seeeeeeeeeeeee");
 			if (nice !== this.get) {
-				trace("yousuck");
+				trace("you suck dick and cock and balls");
 			}
 			return flexmybeloved;
+		}
+
+		function set prop1(newprop:String) {
+			// they're really gonna make me vote for joe biden
+			sohappytoshowus = newprop;
+		}
+		function get prop1() {
+			/* and a block comment cause
+			why
+			the
+			hell
+			not
+			*/
+			return sohappytoshowus;
 		}
 	}
 }
