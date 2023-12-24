@@ -1,0 +1,81 @@
+{
+	"is": "declaration",
+	"of": "package",
+	"name": "anifire.components.ass",
+	"arguments": [
+		[
+			{
+				"is": "statement",
+				"of": "import",
+				"arguments": [
+					"shit.fuck.you"
+				]
+			},
+			{
+				"is": "statement",
+				"of": "import",
+				"arguments": [
+					"flash.shithead.flex"
+				]
+			},
+			{
+				"is": "declaration",
+				"of": "class",
+				"name": "AssComponent",
+				"base": ["extends", "you"],
+				"arguments": [
+					[
+						{
+							"is": "declaration",
+							"of": "var",
+							"name": "get",
+							"type": "String",
+							"attributes": [
+								"private",
+								"static"
+							],
+							"init": "go"
+						},
+						{
+							"is": "declaration",
+							"of": "var",
+							"name": "sohappytoshowus",
+							"type": "String",
+							"attributes": [
+								"private"
+							],
+							"init": "iatethelotus"
+						},
+						{
+							"is": "declaration",
+							"of": "function",
+							"name": "ok",
+							"type": "flex",
+							"parameters": [
+								{
+									"is": "declaration",
+									"of": "var",
+									"name": "nice",
+									"type": "String"
+								}
+							],
+							"arguments": [
+								[
+									{
+										"is": "declaration",
+										"of": "var",
+										"name": "flexmybeloved",
+										"type": "flex",
+										"init": {
+											
+										}
+									}
+								]
+							]
+						}
+					]
+				]
+			}
+		]
+	]
+}

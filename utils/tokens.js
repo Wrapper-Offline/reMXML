@@ -36,18 +36,36 @@ export default class Tokens {
 		"static",
 	];
 	static definitions = [
-		"class",
 		"const",
-		"extends",
 		"function",
 		"get",
-		"implements",
 		"interface",
 		"namespace",
-		"package",
 		"set",
 		"var",
 	];
+	/*  
+		// tokens
+		{
+			"o": "of",
+			"n": "name",
+			"a": "argument",
+			"b": "base",
+			"p": "parameter"
+		}
+		// operators
+		{
+			"?": "optional",
+			"[": "within array",
+			"*": "any amount",
+		}
+	*/
+	static defs = {
+		"package": ["o", "n", "a"],
+		"class": ["o", "n", "?b", "a"],
+		"function": ["o", "n", "[*p", "t", "a"]
+	};
+	static base = ["extends", "implements"];
 	static gyattdefs = [
 		"class",
 		"function",

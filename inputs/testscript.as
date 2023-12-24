@@ -21,11 +21,14 @@ package anifire.components.ass
 			return flexmybeloved;
 		}
 
-		function set prop1(newprop:String) {
+		function set prop1(newprop:String) : void
+		{
 			// they're really gonna make me vote for joe biden
 			sohappytoshowus = newprop;
 		}
-		function get prop1() {
+
+		function get prop1() : String
+		{
 			/* and a block comment cause
 			why
 			the

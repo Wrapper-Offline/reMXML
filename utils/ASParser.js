@@ -21,7 +21,7 @@ export default class ASParser {
 	 */
 	constructor(input) {
 		this.#extractTokens(input).then(() => {
-			//this.#parseTokens();
+			//this.#parsethesecondcoming();
 		}).catch((err) => console.error("errm.. that's not supposed to happen!\n", err));
 	}
 
@@ -154,6 +154,8 @@ export default class ASParser {
 			let inDef = false, gyattdef = false;
 			let defObject = {};
 			let wevetaken = 0;
+
+			let currentAction = {};
 			// finally we'll turn everything into like a tree and we're done with this stage
 			for (let tokenIndex = 0; ; tokenIndex++) {
 				tokenIndex = Number.parseInt(tokenIndex);
@@ -166,7 +168,8 @@ export default class ASParser {
 
 				if (Array.isArray(token)) {
 					if (gyattdef) {
-						
+						currLevel.body = token;
+						defObject = {};
 					} else {
 						level.push(tokenIndex);
 						tokenIndex = -1;
@@ -193,25 +196,66 @@ export default class ASParser {
 					tokenIndex--;
 				}
 				if (Tokens.definitions.includes(token)) {
-					inDef = true;
-					if (Tokens.gyattdefs.includes(token)) {
-						gyattdef = true;
-					}
-					defObject = {
-						name: currLevel[tokenIndex + 1],
-						def: token
-					};
-					if (stored.a.length > 0) {
-						defObject.attributes = stored.a;
-						stored.a = [];
+					if (!inDef) {
+						inDef = true;
+						if (Tokens.gyattdefs.includes(token)) {
+							gyattdef = true;
+						}
+						defObject = {
+							name: currLevel[tokenIndex + 1],
+							def: token
+						};
+						if (stored.a.length > 0) {
+							defObject.attributes = stored.a;
+							stored.a = [];
+						}
+					} else {
+						defObject[token] = currLevel[tokenIndex + 1];
 					}
 				}
 
 				console.log(token)
 			}
 			console.dir(tokens, {depth:null});
+			this.tokens = tokens;
 			res();
 		});
+	}
+
+	#parsethesecondcoming() {
+		for (let tokenIndex = 0; ; tokenIndex++) {
+			tokenIndex = Number.parseInt(tokenIndex);
+
+			let currLevel = tokens;
+			for (const levelIndex of level) {
+				currLevel = currLevel[levelIndex];
+			}
+			let token = currLevel[tokenIndex];
+
+			if (Array.isArray(token)) {
+				if (gyattdef) {
+					currLevel.body = token;
+					defObject = {};
+				} else {
+					level.push(tokenIndex);
+					tokenIndex = -1;
+					continue;
+				}
+			} else if (typeof token == "undefined") {
+				if (level.length > 0) {
+					tokenIndex = level.pop();
+					continue;
+				}
+				break;
+			}
+
+			if (Tokens.attributes.includes(token)) {
+				
+			}
+			if (Tokens.definitions.includes(token)) {
+				
+			}
+		}
 	}
 
 	#parseTokens() {
