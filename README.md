@@ -1,1 +1,2 @@
-# this project has been cancelled. i just don't fucking feel like writing it
+# we are back and in attack 😎
+## (unlike milli vanilli)
