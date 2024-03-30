@@ -1,5 +1,10 @@
 import TokenList from "../tokenList.js";
+import paramAttributes from "./paramAttributes.js";
 
+/**
+ * @param {unknown[]} tokens 
+ * @returns 
+ */
 export default function codeBlock(tokens) {
 	/**
 	 * checks a list for a token.
@@ -7,12 +12,13 @@ export default function codeBlock(tokens) {
 	 * inserts the result into the new array
 	 * @param {Generator[]} list list of parser functions
 	 * @param {*} token token to check in the list
+	 * @param {any[]} additionalArgs additional arguments to be passed
 	 * @returns {boolean} was the token in there and inserted
 	 */
-	function checkList(list, token) {
+	function checkList(list, token, ...additionalArgs) {
 		if (Object.keys(list).includes(token)) {
 			/** @type {Generator} */
-			const defFunc = list[token]();
+			const defFunc = list[token](...additionalArgs);
 			defFunc.next();
 			while (true) {
 				const token = tokens.shift();
@@ -27,10 +33,29 @@ export default function codeBlock(tokens) {
 		return false;
 	}
 
+	let attributes = [];
 	let newArray = [];
 	while (tokens.length > 0) {
 		const token = tokens.shift();
-		if (checkList(TokenList.decs, token)) continue;
+		if (token == "[") {
+			const nextToken = tokens.shift();
+			if (TokenList.paramAttributes.includes(nextToken)) {
+				const attr = paramAttributes(nextToken, tokens.shift());
+				attributes.push(attr);
+				tokens.shift();
+			} else {
+				newArray.push(token, nextToken);
+			}
+			continue;
+		}
+		if (TokenList.attributes.includes(token)) {
+			attributes.push(token);
+			continue;
+		}
+		if (checkList(TokenList.decs, token, attributes)) {
+			attributes = [];
+			continue;
+		}
 		if (checkList(TokenList.sts, token)) continue;
 		newArray.push(token);
 	}

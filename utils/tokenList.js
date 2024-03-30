@@ -1,18 +1,18 @@
 import packageParser from "./actionscript/declarations/package.js";
 import classParser from "./actionscript/declarations/class.js";
 import importParser from "./actionscript/statements/import.js";
+import functionParser from "./actionscript/declarations/function.js";
+import varParser from "./actionscript/declarations/var.js";
+import ifParser from "./actionscript/statements/if.js";
+import elseParser from "./actionscript/statements/else.js";
+import returnParser from "./actionscript/statements/return.js";
 
 export default class TokenList {
-	/*
-	OUTDATED
-	KEEPING THIS HERE UNTIL I REFACTOR THE PARSER
-	tapio/kuehiko brainrot
-	static excludeFunctions = [
-		"watcherSetupUtil",
-		"moduleFactory",
-		"initialize",
-	];
-	static excludeVars = [
+	static symbolList = [" ", ".", ":", ";", "[", "]", "{", "}", "=", "(", ")", ",", "\"", "'"];
+	static openingTags = ["{", "("];
+	static closingTags = ["}", ")"];
+
+	static blockedVars = [
 		"_watcherSetupUtil",
 		"__moduleFactoryInitialized",
 		"_bindings",
@@ -20,14 +20,7 @@ export default class TokenList {
 		"_bindingsByDestination",
 		"_bindingsBeginWithWord",
 	];
-	*/
 
-	static symbolList = [" ", ".", ":", ";", "[", "]", "{", "}", "=", "(", ")", ",", "\"", "'"];
-	static paramStatements = [
-		"if",
-		"for",
-		"switch",
-	];
 	static attributes = [
 		"dynamic",
 		"final",
@@ -39,51 +32,22 @@ export default class TokenList {
 		"public",
 		"static",
 	];
-	static definitions = [
-		"const",
-		"function",
-		"get",
-		"interface",
-		"namespace",
-		"set",
-		"var",
+	static paramAttributes = [
+		"Bindable",
+		"Embed",
 	];
-	/*  
-		// tokens
-		{
-			"of": "definition of",
-			"n": "name",
-			"a": "argument",
-			"b": "base",
-			"p": "parameter",
-			"t": "type"
-		}
-		// operators
-		{
-			"?": "optional",
-			"[": "within array",
-			"*": "any amount",
-		}
-	*/
+	static componentNameMatch = new RegExp("^_([a-zA-Z]+)_([a-zA-Z]+)(\\d+)_(c|i)$");
+
 	static decs = {
 		"package": packageParser,
-		"class": classParser
+		"class": classParser,
+		"function": functionParser,
+		"var": varParser,
 	};
 	static sts = {
-		"import": importParser
+		"import": importParser,
+		"if": ifParser,
+		"else": elseParser,
+		"return": returnParser,
 	};
-
-	static defs = {
-		"function": ["of", "name", "[*p", "t", "a"]
-	};
-	static base = ["extends", "implements"];
-	static gyattdefs = [
-		"class",
-		"function",
-		"interface",
-		"package",
-	];
-
-	static openingTags = ["{", "("];
-	static closingTags = ["}", ")"];
 };

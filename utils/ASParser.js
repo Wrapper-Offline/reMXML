@@ -1,5 +1,6 @@
 import Tokens from "./tokenList.js";
 import packageParser from "./actionscript/declarations/package.js";
+import TokenList from "./tokenList.js";
 
 export default class ASParser {
 	name = null;
@@ -15,14 +16,13 @@ export default class ASParser {
 	vars = {};
 	functions = {};
 	components = {};
-	tokens = [];
 
 	/**
 	 * @param {string} input actionscript file
 	 */
 	constructor(input) {
 		this.#extractTokens(input).then(() => {
-			//this.#parsethesecondcoming();
+			this.#scrapeData();
 		}).catch((err) => console.error("errm.. that's not supposed to happen!\n", err));
 	}
 
@@ -157,7 +157,39 @@ export default class ASParser {
 			const asPackage = packageFunc.next(tokens[2]).value;
 			
 			console.dir(asPackage, {depth:null});
+			this.package = asPackage;
 			res();
 		});
+	}
+
+	#scrapeData() {
+		const daclass = this.package.body.find((t) => 
+			t.is == "declaration" && t.of == "class");
+		this.name = daclass.name;
+		let isComp = false;
+		daclass.body
+			.filter((t) => t.is == "declaration" && t.of == "var")
+			.forEach((t) => {
+				if (TokenList.blockedVars.includes(t.name)) {
+					isComp = true;
+					return;
+				}
+				this.vars[t.name] = t;
+				delete this.vars[t.name].name;
+			});
+			console.log(this.vars)
+		if (!isComp) {
+			throw "not an mxml component"
+		}
+		daclass.body
+			.filter((t) => t.is == "declaration" && t.of == "function")
+			.forEach((t) => {
+				if (t.name == this.name) { // comp class constructor
+					console.log(t)
+				}
+				const matches = t.name.match(TokenList.componentNameMatch);
+				if (!matches) return;
+				const expectedType = matches[2];
+			});
 	}
 };
