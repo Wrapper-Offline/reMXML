@@ -1,4 +1,4 @@
-import codeBlock from "../code_block.js";
+import codeBlock from "../misc/code_block.js";
 
 export default function* elseParser() {
 	const nextToken = yield;

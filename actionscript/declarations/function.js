@@ -1,36 +1,39 @@
-import codeBlock from "../code_block.js";
+import codeBlock from "../misc/code_block.js";
 
 export default function* functionParser(attributes) {
-	const nextToken = yield;
+	const varifyOrName = yield;
 	let varified, name;
-	if (nextToken == "get" || nextToken == "set") {
-		varified = nextToken;
+	if (varifyOrName == "get" || varifyOrName == "set") {
+		varified = varifyOrName;
 		name = yield;
 	} else {
-		name = nextToken;
+		name = varifyOrName;
 	}
 	const params = yield;
 
-	const nextToken2 = yield;
+	const typeOrBody = yield;
 	let returnType, bodyTokens;
-	if (nextToken2 == ":") { // there is a return type, next is the body
+	if (typeOrBody == ":") { // there is a return type and a body following it
 		returnType = yield;
 		bodyTokens = yield;
 	} else { // no return type specified and we got the body instead, stick to *
 		returnType = "*";
-		bodyTokens = nextToken2;
+		bodyTokens = typeOrBody;
 	}
 	// my body count's going waaay up
 	const body = codeBlock(bodyTokens);
 
-	return {
+	let returnx = {
 		is: "declaration",
 		of: "function",
 		name: name,
-		varified: varified,
 		attributes: attributes,
 		params: params,
 		returnType: returnType,
 		body: body
 	};
+	if (varified) {
+		returnx.varified = varified;
+	}
+	return returnx;
 };

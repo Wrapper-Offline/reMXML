@@ -1,8 +1,5 @@
 import * as fs from "node:fs";
-import ASParser from "./utils/ASParser.js";
-import XMLWriter from "xml-writer";
-import XML from "./utils/xml/XML.js";
-import XMLNode from "./utils/xml/XMLNode.js";
+import ASParser from "./actionscript/parser.js";
 
 export default class ReMXML {
 	#inputAS = null;
@@ -24,6 +21,6 @@ export default class ReMXML {
 		xw.text('Some content');
 		xw.endDocument();*/
 		//this.#generated = new XML(parser.extends);
-		console.log(parser);
+		//console.log(parser);
 	}
 };

@@ -1,12 +1,12 @@
-import codeBlock from "../code_block.js";
+import codeBlock from "../misc/code_block.js";
 
-export default function* ifParser() {
+export default function* whileParser() {
 	const expression = yield;
 	const bodyTokens = yield;
 	const body = codeBlock(bodyTokens);
 	return {
 		is: "statement",
-		of: "if",
+		of: "while",
 		expression: expression,
 		body: body
 	};

@@ -1,3 +1,7 @@
+/*
+reMXML
+Written by octanuary
+*/
 import * as fs from "node:fs";
 import ReMXML from "./ReMXML.js";
 

@@ -1,11 +1,16 @@
 import TokenList from "../tokenList.js";
 import paramAttributes from "./paramAttributes.js";
+import expression from "./expression.js";
 
 /**
  * @param {unknown[]} tokens 
  * @returns 
  */
 export default function codeBlock(tokens) {
+	let attributes = [];
+	let partials = {};
+	let newArray = [];
+
 	/**
 	 * checks a list for a token.
 	 * if it contains it, runs the parser function and
@@ -24,6 +29,25 @@ export default function codeBlock(tokens) {
 				const token = tokens.shift();
 				const result = defFunc.next(token);
 				if (result.done) {
+					const val = result.value;
+					if (val.partial) {
+						if (!partials[val.name]) {
+							partials[val.name] = [val.partial, val];
+						} else {
+							partials[val.name][0] += val.partial;
+							partials[val.name].push(val);
+							// reached total number of pieces
+							if (partials[val.name][0] == 3) {
+								partials[val.name].shift();
+								const newo = {};
+								partials[val.name].forEach(v => Object.assign(newo, v));
+								newArray.push(newo);
+								break;
+							}
+						}
+						delete val.partial;
+						break;
+					}
 					newArray.push(result.value);
 					break;
 				}
@@ -33,20 +57,14 @@ export default function codeBlock(tokens) {
 		return false;
 	}
 
-	let attributes = [];
-	let newArray = [];
+	let buildUp = [];
 	while (tokens.length > 0) {
 		const token = tokens.shift();
-		if (token == "[") {
-			const nextToken = tokens.shift();
-			if (TokenList.paramAttributes.includes(nextToken)) {
-				const attr = paramAttributes(nextToken, tokens.shift());
-				attributes.push(attr);
-				tokens.shift();
-			} else {
-				newArray.push(token, nextToken);
-			}
-			continue;
+		if (TokenList.paramAttributes.includes(token)) {
+			newArray.pop();
+			const attr = paramAttributes(token, tokens.shift());
+			attributes.push(attr);
+			tokens.shift();
 		}
 		if (TokenList.attributes.includes(token)) {
 			attributes.push(token);
@@ -57,7 +75,14 @@ export default function codeBlock(tokens) {
 			continue;
 		}
 		if (checkList(TokenList.sts, token)) continue;
-		newArray.push(token);
+		if (token != ";") {
+			buildUp.push(token);
+			continue;
+		} else {
+			newArray.push(expression(buildUp));
+			buildUp = [];
+		}
+		
 	}
 	return newArray;
 };
